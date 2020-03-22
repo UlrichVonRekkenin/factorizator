@@ -1,6 +1,6 @@
 ## Why
 
-I`m liking the prime all time.
+I`m loving the prime all time.
 
 ## Parallel 
 
