@@ -1,20 +1,26 @@
 #include "include/searcher.h"
-
 #include <iostream>
 
 
 int main(int argc, char* argv[])
 {
-  namespace sp = searcher;
-  using namespace std;
+    namespace sp = searcher;
 
-  sp::Primes primes = {2, 3, 5, 7, 9, 11, 13, 17, 19, 23};
+    std::cout << "Start reading prime number file...";
+    static sp::Factorizer f(sp::Primerizer::load_primes(argv[1]));
+    std::cout << "\nFinish.\n\nEnter number..." << std::endl;
 
-  for (auto&[k, v] : sp::Factorizer{primes} .factorize(8 * 5 * 7 * 19 * 101)) {
-    if (v > 0) {
-      cout << k << "^" << v << endl;
+    unsigned long long input{0};
+
+    while (std::cin >> input) {
+        for (auto&[k, v] : f.factorize(input)) {
+            if (v>0) {
+                std::cout << k << "^" << v << std::endl;
+            }
+        }
+
+        std::cout << "Another one, please..." << std::endl;
     }
-  }
 
-  return 0;
+    return 0;
 }
