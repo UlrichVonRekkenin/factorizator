@@ -10,6 +10,7 @@
 
 #include <functional>
 #include <numeric>
+#include <algorithm>
 
 #include <vector>
 
@@ -22,6 +23,17 @@ namespace searcher {
 
 using ull = unsigned long long;
 using Primes = std::vector<ull>;
+
+template<typename Duration>
+std::pair<float, std::string> adoptive_duration(Duration&& dur)
+{
+    if (dur>=1'000'000)
+        return {dur/1'000'000., " sec"};
+    else if (dur>=1'000)
+        return {dur/1'000., " ms"};
+    else
+        return {dur, " microseconds"};
+}
 
 template<typename T>
 void split(const std::basic_string<T>& str, T c, std::vector<std::basic_string<T>>& vec)
@@ -52,6 +64,8 @@ class Primerizer final {
             while (getline(stream, s)) {
                 res.emplace_back(std::stoull(s));
             }
+
+            std::cout << "\nLast prime number is " << s << std::endl;
 
             stream.close();
             return res;
@@ -103,12 +117,13 @@ class Factorizer final {
     {
         _result.clear();
 
-        if (auto f = std::find(_primes.begin(), _primes.end(), n); f!=_primes.end())
+        if (const auto f = std::find(_primes.begin(), _primes.end(), n); f!=_primes.end())
             return {{n, 1}};
 
         const auto start{std::chrono::steady_clock::now()};
+        const auto end_{std::upper_bound(_primes.begin(), _primes.end(), n)};
 
-        std::for_each(_primes.begin(), _primes.end(), [&n, this](const auto& p) {
+        std::for_each(_primes.begin(), end_, [&n, this](const auto& p) {
           auto f{std::async(std::launch::deferred, power, n, p)};
           _result[p] = f.get();
         });
@@ -119,9 +134,11 @@ class Factorizer final {
             extend(n);
         }
 
-        std::cout << "Elapsed time "
-                  << std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now()-start).count()
-                  << "s" << std::endl;
+        const auto end{std::chrono::steady_clock::now()};
+        const auto elapsed_{std::chrono::duration_cast<std::chrono::microseconds>(end-start)};
+        const auto[time, unit] = adoptive_duration(elapsed_.count());
+
+        std::cout << "Elapsed time " << time << unit << std::endl;
 
         return _result;
     }
