@@ -17,6 +17,7 @@
 #include <fstream>
 #include <filesystem>
 
+
 namespace searcher {
 
 using ull = unsigned long long;
@@ -38,19 +39,64 @@ void split(const std::basic_string<T>& str, T c, std::vector<std::basic_string<T
             vec.emplace_back(str.substr(i, str.length()));
     }
 }
+class Primerizer final {
+
+  public:
+    Primerizer() = default;
+
+    static std::vector<ull> load_primes(const std::filesystem::path& primes_file)
+    {
+        if (std::ifstream stream(primes_file); stream.is_open()) {
+            std::vector<ull> res;
+            std::string s;
+            while (getline(stream, s)) {
+                res.emplace_back(std::stoull(s));
+            }
+
+            stream.close();
+            return res;
+        }
+        else {
+            std::cerr << "Enable to open file " << primes_file << std::endl;
+        }
+
+        return {};
+    }
+
+    static void save_primes(Primes&& primes, const std::filesystem::path& primes_file)
+    {
+        if (std::ofstream stream(primes_file); stream.is_open()) {
+            for (auto&& p:primes) {
+                stream << std::to_string(p) << std::endl;
+            }
+
+            stream.close();
+        }
+        else {
+            std::cerr << "Enable to open file " << primes_file << std::endl;
+        }
+    }
+
+};
 
 class Factorizer final {
     using Result = std::map<ull, ull>;
 
     Result _result;
     Primes _primes;
+    bool _extended = false;
 
   public:
 
-    explicit Factorizer( Primes&& pr)
+    explicit Factorizer(Primes&& pr)
             :_primes(std::move(pr)) { }
+
     ~Factorizer()
     {
+        if (_extended) {
+            std::cout << "Prime list was be extended. Save it." << std::endl;
+            searcher::Primerizer::save_primes(std::move(_primes), "primes.dat");
+        }
     }
 
     Result factorize(ull n)
@@ -69,6 +115,7 @@ class Factorizer final {
 
         if (const auto&& ext = must_extended(n); ext.first) {
             std::cout << "not enough prime numbers...\n";
+            _extended = true;
             extend(n);
         }
 
@@ -127,35 +174,6 @@ class Factorizer final {
 
         return result;
     }
-};
-
-
-class Primerizer final {
-
-  public:
-    Primerizer() = default;
-
-    static std::vector<ull> load_primes(const std::filesystem::path& primes_file)
-    {
-        if (std::ifstream stream(primes_file); stream.is_open()) {
-            std::vector<ull> res;
-            std::string s;
-            while (getline(stream, s)) {
-                res.emplace_back(std::stoull(s));
-            }
-            return res;
-        }
-        else {
-            std::cerr << "Enable to open file " << primes_file << std::endl;
-        }
-
-        return {};
-    }
-
-    static void save_primes(const std::filesystem::path& primes_file)
-    {
-    }
-
 };
 
 }
